@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer');
-// const http = require('http');
+const cron = require('cron');
 const readline = require('readline');
 const fs = require('fs');
 const pathPrefix = 'content/';
@@ -101,12 +101,11 @@ async function emuBrowser(cred) {
     await page.goto('https://workflow.shou.edu.cn/infoplus/form/XSJKSBLJ/start');
     await log('INFO', 'Redirecting...');
 
-    await page.screenshot({path: pathPrefix + 'pre-report.png'});
-
     try {
         await log('INFO', 'Waiting for report UI to show up...');
         await page.waitForSelector('#V1_CTRL82', {visible: true});
         await page.click("#V1_CTRL82");
+        await page.screenshot({path: pathPrefix + 'pre-report.png'});
         await log('INFO', 'Report UI OK.');
     }
     catch (e) {
@@ -118,16 +117,13 @@ async function emuBrowser(cred) {
 
     await page.waitForSelector(".dialog_button.default.fr");
     await page.click(".dialog_button.default.fr");
-    // await page.waitForSelector(".dialog_button.default.fr");
-    // await page.waitForNavigation({
-    //     waitUntil: 'networkidle0',
-    // });
     try {
         await log('INFO', "Wait until success...");
-        await page.waitForSelector(".dialog.display");
+        await page.waitFor(1000);
+        await page.waitForSelector(".dialog_button");
     }
     catch (e) {
-        await onReject(e, "Potentially failed report.", page);
+        await onReject(e, "Potentially failed report. Maybe performed between 22:00 - 23:59 ?", page);
     }
 
     await log('INFO', 'Report succeed.');
