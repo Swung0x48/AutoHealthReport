@@ -54,14 +54,17 @@ async function ProcessCookie() {
 }
 
 async function log(level, detail) {
-    console.log('[' + level + '] ' + detail);
+    return new Promise(resolve => {
+        console.log('[' + level + '] ' + detail);
+        resolve();
+    });
 }
 
 async function onReject(reason, detail, page) {
-    log('ERR', detail);
-    log('ERR', 'Reason: ' + reason);
+    await log('ERR', detail);
+    await log('ERR', 'Reason: ' + reason);
+    await log('INFO', 'Screenshot before fail will be captured to: ' + pathPrefix + 'onError.png');
     await page.screenshot({path: pathPrefix + 'onError.png'});
-
     process.exit(1);
 }
 
@@ -84,28 +87,31 @@ async function emuBrowser(cred) {
     await page.screenshot({path: pathPrefix + 'login.png'});
     await page.click('input[name="submit"]');
 
-    page.waitForSelector(".c_4f9dff").then(value => {
-        log('INFO', 'Login succeeded.');
-    }, reason => {
-        onReject(reason, 'Login failed', page);
-    });
-    await page.screenshot({
-        path: pathPrefix + 'post_login.png'
-    });
+    try {
+        await page.waitForSelector(".c_4f9dff");
+        await log('INFO', 'Login succeeded.');
+    }
+    catch (e) {
+        await onReject(e, 'Login failed', page);
+        await page.screenshot({
+            path: pathPrefix + 'postlogin.png'
+        });
+    }
 
     await page.goto('https://workflow.shou.edu.cn/infoplus/form/XSJKSBLJ/start');
     await log('INFO', 'Redirecting...');
 
     await page.screenshot({path: pathPrefix + 'pre-report.png'});
 
-    await log('INFO', 'Waiting for report UI to show up...');
-    page.waitForSelector('#V1_CTRL82').then(value => {
-        log('INFO', 'Report UI OK.');
-    }, reason => {
-        onReject(reason, 'Report UI does not show up.', page);
-    });
-    // await page.waitForSelector("#V1_CTRL82"); // TODO
-    await page.click("#V1_CTRL82");
+    try {
+        await log('INFO', 'Waiting for report UI to show up...');
+        await page.waitForSelector('#V1_CTRL82', {visible: true});
+        await page.click("#V1_CTRL82");
+        await log('INFO', 'Report UI OK.');
+    }
+    catch (e) {
+        await onReject(e, 'Report UI does not show up.', page);
+    }
 
     await page.waitForSelector(".command_button_content");
     await page.click(".command_button_content");
@@ -113,9 +119,17 @@ async function emuBrowser(cred) {
     await page.waitForSelector(".dialog_button.default.fr");
     await page.click(".dialog_button.default.fr");
     // await page.waitForSelector(".dialog_button.default.fr");
-    await page.waitForNavigation({
-        waitUntil: 'networkidle0',
-    });
+    // await page.waitForNavigation({
+    //     waitUntil: 'networkidle0',
+    // });
+    try {
+        await log('INFO', "Wait until success...");
+        await page.waitForSelector(".dialog.display");
+    }
+    catch (e) {
+        await onReject(e, "Potentially failed report.", page);
+    }
+
     await log('INFO', 'Report succeed.');
     let screenshotPath = 'report-' + new Date().toISOString() + '.png'
     await page.screenshot({path: pathPrefix + screenshotPathPrefix + screenshotPath});
