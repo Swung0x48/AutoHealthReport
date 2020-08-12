@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer');
-const cron = require('cron');
+const CronJob = require('cron').CronJob;
 const readline = require('readline');
 const fs = require('fs');
 const pathPrefix = 'content/';
@@ -65,14 +65,15 @@ async function onReject(reason, detail, page) {
     await log('ERR', 'Reason: ' + reason);
     await log('INFO', 'Screenshot before fail will be captured to: ' + pathPrefix + 'onError.png');
     await page.screenshot({path: pathPrefix + 'onError.png'});
-    process.exit(1);
+    throw reason;
+    // process.exit(1);
 }
 
 async function emuBrowser(cred) {
     await log('INFO', 'Starting puppeteer...');
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
-    // await page.setViewport({ width: 750, height: 1334 });
+    await page.setViewport({ width: 750, height: 1334 });
 
     await page.goto('https://www.shou.edu.cn/');
     await page.screenshot({
@@ -118,7 +119,7 @@ async function emuBrowser(cred) {
     await page.waitForSelector(".dialog_button.default.fr");
     await page.click(".dialog_button.default.fr");
     try {
-        await log('INFO', "Wait until success...");
+        await log('INFO', "Wait until report process finished...");
         await page.waitFor(1000);
         await page.waitForSelector(".dialog_button");
     }
@@ -134,10 +135,10 @@ async function emuBrowser(cred) {
     await browser.close();
     await log('INFO', 'Closing browser...');
     await log('INFO', 'Exiting...');
-    process.exit(0);
+    // process.exit(0);
 }
 
-(async () => {
+async function task() {
     if (!fs.existsSync(pathPrefix)) {
         fs.mkdirSync(pathPrefix);
     }
@@ -146,4 +147,33 @@ async function emuBrowser(cred) {
     }
     const cred = await credInput();
     await emuBrowser(cred);
+}
+
+(async () => {
+    await log('INFO', 'Dry run...\n');
+    let option = 'n';
+    try {
+        // await task();
+        option = 'y';
+    }
+    catch (e) {
+        await log('WARN', 'Dry run failed.');
+        await log('ERR', 'Reason: ' + e);
+        await log('INFO', 'Continue anyway?');
+        rl.question('(y/N)', answer => {
+            option = answer;
+        });
+    }
+
+    if (option === 'y') {
+        let job = new CronJob('0 18 0 * * *', await task, null, false, 'Asia/Shanghai');
+        job.start();
+        await log('INFO', 'Cronjob set.');
+        await log('INFO', 'Next task will be fired at: ' + new Date(job.nextDate()).toLocaleString());
+    }
+    else {
+        process.exit(1);
+    }
 })();
+
+
