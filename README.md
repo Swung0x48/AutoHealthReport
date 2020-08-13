@@ -36,11 +36,18 @@
         git clone https://github.com/Swung0x48/AutoHealthReport.git
         ```
 1. 安装必要的依赖。
-    ```
-    cd AutoHealthReport # Windows：请打开解压后的文件夹，按住 Shift，在窗口空白处按下鼠标右键， 选择 「在此处打开 PowerShell 窗口」或「在此处打开命令提示符窗口」
-    npm install
-    # yarn install # 如果你喜欢用 yarn 的话
-    ```
+    - 进入下载好的程序目录:
+        - *nix:
+        ```
+        cd AutoHealthReport
+      ```
+      Windows：
+      请打开解压后的文件夹，按住 Shift，在窗口空白处按下鼠标右键， 选择 「在此处打开 PowerShell 窗口」或「在此处打开命令提示符窗口」
+    - 安装依赖:
+        ``` 
+        npm install
+        # yarn install # 如果你喜欢用 yarn 的话
+        ```
 
 1. 运行。
     ```
