@@ -52,6 +52,7 @@
 1. 运行。
     ```
     npm run release
+    # yarn run release # 如果你之前用的是 yarn 的话
     ```
    
 1. 使用守护进程保持运行。
