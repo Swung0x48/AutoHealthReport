@@ -117,7 +117,7 @@
       <workItem from="1597114463668" duration="1748000" />
       <workItem from="1597116411741" duration="5736000" />
       <workItem from="1597195217469" duration="32683000" />
-      <workItem from="1597281933110" duration="3230000" />
+      <workItem from="1597281933110" duration="6775000" />
     </task>
     <task id="LOCAL-00001" summary="Initial commit">
       <created>1597228308096</created>
@@ -161,7 +161,14 @@
       <option name="project" value="LOCAL" />
       <updated>1597249166762</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Cronjob working!">
+      <created>1597285374572</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1597285374572</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -185,7 +192,8 @@
     <MESSAGE value="Seemingly first working build." />
     <MESSAGE value="Handling bad operation performed between 22:00 - 23:59" />
     <MESSAGE value="Cronjob WIP." />
-    <option name="LAST_COMMIT_MESSAGE" value="Cronjob WIP." />
+    <MESSAGE value="Cronjob working!" />
+    <option name="LAST_COMMIT_MESSAGE" value="Cronjob working!" />
   </component>
   <component name="WindowStateProjectService">
     <state x="270" y="305" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1597235024572">
@@ -308,10 +316,10 @@
       <screen x="161" y="1050" width="1440" height="900" />
     </state>
     <state x="469" y="1250" key="IDE.errors.dialog/161.1050.1440.900/0.0.1680.1050@161.1050.1440.900" timestamp="1597118560575" />
-    <state x="440" y="265" key="Vcs.Push.Dialog.v2" timestamp="1597249168882">
+    <state x="440" y="265" key="Vcs.Push.Dialog.v2" timestamp="1597285377009">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="440" y="265" key="Vcs.Push.Dialog.v2/161.1050.1440.900/0.0.1680.1050@0.0.1680.1050" timestamp="1597249168882" />
+    <state x="440" y="265" key="Vcs.Push.Dialog.v2/161.1050.1440.900/0.0.1680.1050@0.0.1680.1050" timestamp="1597285377009" />
     <state x="391" y="261" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2" timestamp="1597282903577">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
@@ -334,7 +342,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/index.js</url>
-          <line>162</line>
+          <line>163</line>
           <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="10" />
         </line-breakpoint>
