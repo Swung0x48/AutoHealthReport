@@ -69,11 +69,11 @@ async function onReject(reason, detail, page) {
     // process.exit(1);
 }
 
-async function emuBrowser(cred) {
+async function emuBrowser(username, password) {
     await log('INFO', 'Starting puppeteer...');
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
-    await page.setViewport({ width: 750, height: 1334 });
+    await page.setViewport({ width: 450, height: 600 });
 
     await page.goto('https://www.shou.edu.cn/');
     await page.screenshot({
@@ -83,8 +83,8 @@ async function emuBrowser(cred) {
     await log('INFO', 'Logging in...');
 
     /* --- Login --- */
-    await page.type('input[name="username"]', cred.username);
-    await page.type('input[name="password"]', cred.password);
+    await page.type('input[name="username"]', username);
+    await page.type('input[name="password"]', password);
     await page.screenshot({path: pathPrefix + 'login.png'});
     await page.click('input[name="submit"]');
 
@@ -93,7 +93,7 @@ async function emuBrowser(cred) {
         await log('INFO', 'Login succeeded.');
     }
     catch (e) {
-        await onReject(e, 'Login failed', page);
+        await onReject(e, "Login failed. Maybe there's a problem in credential or VPN connection?", page);
         await page.screenshot({
             path: pathPrefix + 'postlogin.png'
         });
@@ -104,8 +104,8 @@ async function emuBrowser(cred) {
 
     try {
         await log('INFO', 'Waiting for report UI to show up...');
-        await page.waitForSelector('#V1_CTRL82', {visible: true});
-        await page.click("#V1_CTRL82");
+        await page.waitForSelector('#V0_CTRL62', {visible: true});
+        await page.click("#V0_CTRL62");
         await page.screenshot({path: pathPrefix + 'pre-report.png'});
         await log('INFO', 'Report UI OK.');
     }
@@ -134,7 +134,7 @@ async function emuBrowser(cred) {
 
     await browser.close();
     await log('INFO', 'Closing browser...');
-    await log('INFO', 'Exiting...');
+    await log('INFO', 'Exiting...\n');
     // process.exit(0);
 }
 
@@ -145,31 +145,42 @@ async function task() {
     if (!fs.existsSync(pathPrefix + screenshotPathPrefix)) {
         fs.mkdirSync(pathPrefix + screenshotPathPrefix);
     }
-    const cred = await credInput();
-    await emuBrowser(cred);
+    const config = await credInput();
+    await emuBrowser(config.username, config.password);
 }
 
 (async () => {
-    await log('INFO', 'Dry run...\n');
     let option = 'n';
     try {
-        // await task();
+        await log('INFO', 'Dry run...\n');
+        await task();
         option = 'y';
     }
     catch (e) {
         await log('WARN', 'Dry run failed.');
         await log('ERR', 'Reason: ' + e);
         await log('INFO', 'Continue anyway?');
-        rl.question('(y/N)', answer => {
-            option = answer;
-        });
+        option = await (async () => {
+            return new Promise(resolve => {
+               rl.question('(y/N)', answer => {
+                   resolve(answer || 'n');
+               });
+            });
+        })();
     }
 
     if (option === 'y') {
-        let job = new CronJob('0 18 0 * * *', await task, null, false, 'Asia/Shanghai');
+        let job = new CronJob('0 15 0 * * *', async () => {
+            await task();
+            job.stop();
+        }, () => {
+            log('INFO', 'Scheduled run completed.');
+            log('INFO', 'Next task will be fired at: ' + new Date(job.nextDate()).toLocaleString() + '\n');
+            job.start();
+        }, false, 'Asia/Shanghai');
         job.start();
         await log('INFO', 'Cronjob set.');
-        await log('INFO', 'Next task will be fired at: ' + new Date(job.nextDate()).toLocaleString());
+        await log('INFO', 'Next task will be fired at: ' + new Date(job.nextDate()).toLocaleString() + '\n');
     }
     else {
         process.exit(1);
