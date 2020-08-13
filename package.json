@@ -8,8 +8,14 @@
     "test": "node index-dev.js"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Swung0x48",
+  "license": "Apache-2.0",
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ],
   "dependencies": {
     "cron": "^1.8.2",
     "puppeteer": "^5.2.1"
