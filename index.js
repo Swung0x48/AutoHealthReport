@@ -4,6 +4,7 @@ const readline = require('readline');
 const fs = require('fs');
 const pathPrefix = 'content/';
 const screenshotPathPrefix = 'screenshot/';
+const CronString = '0 15 0 * * *';
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -170,7 +171,7 @@ async function task() {
     }
 
     if (option === 'y') {
-        let job = new CronJob('0 15 0 * * *', async () => {
+        let job = new CronJob(CronString, async () => {
             await task();
             job.stop();
         }, () => {
