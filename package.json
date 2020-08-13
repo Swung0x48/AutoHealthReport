@@ -18,6 +18,7 @@
   ],
   "dependencies": {
     "cron": "^1.8.2",
+    "http-shutdown": "^1.2.2",
     "puppeteer": "^5.2.1"
   }
 }

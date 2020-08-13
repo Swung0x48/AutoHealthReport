@@ -1,10 +1,13 @@
 const puppeteer = require('puppeteer');
 const CronJob = require('cron').CronJob;
+const http = require('http');
 const readline = require('readline');
 const fs = require('fs');
 const pathPrefix = 'content/';
 const screenshotPathPrefix = 'screenshot/';
 const CronString = '0 15 0 * * *';
+// const CronString = '0 * * * * *';
+let server;
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -64,8 +67,10 @@ async function log(level, detail) {
 async function onReject(reason, detail, page) {
     await log('ERR', detail);
     await log('ERR', 'Reason: ' + reason);
-    await log('INFO', 'Screenshot before fail will be captured to: ' + pathPrefix + 'onError.png');
-    await page.screenshot({path: pathPrefix + 'onError.png'});
+    if (page !== null) {
+        await log('INFO', 'Screenshot before fail will be captured to: ' + pathPrefix + 'onError.png');
+        await page.screenshot({path: pathPrefix + 'onError.png'});
+    }
     throw reason;
     // process.exit(1);
 }
@@ -74,7 +79,7 @@ async function emuBrowser(username, password) {
     await log('INFO', 'Starting puppeteer...');
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
-    await page.setViewport({ width: 450, height: 600 });
+    await page.setViewport({ width: 450, height: 550 });
 
     await page.goto('https://www.shou.edu.cn/');
     await page.screenshot({
@@ -129,14 +134,41 @@ async function emuBrowser(username, password) {
     }
 
     await log('INFO', 'Report succeed.');
+    await page.screenshot({path: pathPrefix  + 'success.png'});
     let screenshotPath = 'report-' + new Date().toISOString() + '.png'
-    await page.screenshot({path: pathPrefix + screenshotPathPrefix + screenshotPath});
+    let screenshotBuffer = await page.screenshot({path: pathPrefix + screenshotPathPrefix + screenshotPath});
     await log('INFO', 'Screenshot saved at: ' + pathPrefix + screenshotPathPrefix + screenshotPath);
 
     await browser.close();
     await log('INFO', 'Closing browser...');
     await log('INFO', 'Exiting...\n');
+    return screenshotBuffer;
     // process.exit(0);
+}
+
+async function screenshotServer(buffer, server) {
+    try
+    {
+        if (server !== undefined) {
+            server.shutdown(async function(err) {
+                if (err) {
+                    return onReject(err.message, 'Screenshot server failed on shutting down.', null);
+                }
+                await log('INFO', 'Shutting down screenshot server to reload new screenshot.');
+            });
+        }
+        server = http.createServer(function (req, res) {
+            res.writeHead(200, {'Content-Type': 'image/jpeg'});
+            res.end(buffer);
+        });
+        server = require('http-shutdown')(server);
+        server.listen(8124);
+        await log('INFO', 'Now you can go to http://localhost:8124/ to access screenshot.\n');
+        return server;
+    }
+    catch (e) {
+        await onReject(e, 'Screenshot server goes wrong.', null);
+    }
 }
 
 async function task() {
@@ -147,7 +179,8 @@ async function task() {
         fs.mkdirSync(pathPrefix + screenshotPathPrefix);
     }
     const config = await credInput();
-    await emuBrowser(config.username, config.password);
+    let buffer = await emuBrowser(config.username, config.password);
+    server = await screenshotServer(buffer, server);
 }
 
 (async () => {
@@ -155,6 +188,7 @@ async function task() {
     try {
         await log('INFO', 'Dry run...\n');
         await task();
+        await log('INFO', 'Dry run completed.');
         option = 'y';
     }
     catch (e) {
