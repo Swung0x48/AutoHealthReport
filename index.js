@@ -136,17 +136,17 @@ async function emuBrowser(username, password) {
     await log('INFO', 'Report succeed.');
     await page.screenshot({path: pathPrefix  + 'success.png'});
     let screenshotPath = 'report-' + new Date().toISOString() + '.png'
-    let screenshotBuffer = await page.screenshot({path: pathPrefix + screenshotPathPrefix + screenshotPath});
+    let screenshotString = await page.screenshot({path: pathPrefix + screenshotPathPrefix + screenshotPath, encoding: 'base64'});
     await log('INFO', 'Screenshot saved at: ' + pathPrefix + screenshotPathPrefix + screenshotPath);
 
     await browser.close();
     await log('INFO', 'Closing browser...');
     await log('INFO', 'Exiting...\n');
-    return screenshotBuffer;
+    return screenshotString;
     // process.exit(0);
 }
 
-async function screenshotServer(buffer, server) {
+async function screenshotServer(image, server) {
     try
     {
         if (server !== undefined) {
@@ -158,8 +158,26 @@ async function screenshotServer(buffer, server) {
             });
         }
         server = http.createServer(function (req, res) {
-            res.writeHead(200, {'Content-Type': 'image/jpeg'});
-            res.end(buffer);
+            res.writeHead(200, {'Content-Type': 'text/html'});
+            res.write("<!DOCTYPE html>\n" +
+                "<html lang=\"en\">\n" +
+                "<head>\n" +
+                "    <meta charset=\"UTF-8\">\n" +
+                "    <title>Auto Health Report</title>\n" +
+                "</head>\n" +
+                "<body>\n" +
+                "    <div>\n" +
+                "        <p>\n" +
+                "            This screenshot is taken at: " + new Date().toString() +
+                "    </p>\n" +
+                "        <br/>\n" +
+                "        <p>\n" +
+                "            <img src=\"data:image/png;base64," + image + "\"/>        </p>\n" +
+                "    </div>\n" +
+                "</body>\n" +
+                "</html>"
+            );
+            res.end();
         });
         server = require('http-shutdown')(server);
         server.listen(8124);
@@ -179,8 +197,8 @@ async function task() {
         fs.mkdirSync(pathPrefix + screenshotPathPrefix);
     }
     const config = await credInput();
-    let buffer = await emuBrowser(config.username, config.password);
-    server = await screenshotServer(buffer, server);
+    let image = await emuBrowser(config.username, config.password);
+    server = await screenshotServer(image, server);
 }
 
 (async () => {
