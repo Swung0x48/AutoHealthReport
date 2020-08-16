@@ -168,7 +168,7 @@ async function screenshotServer(image, server) {
                 "<body>\n" +
                 "    <div>\n" +
                 "        <p>\n" +
-                "            This screenshot is taken at: " + new Date().toString() +
+                "            This screenshot is taken at: " + new Date().toLocaleString() +
                 "    </p>\n" +
                 "        <br/>\n" +
                 "        <p>\n" +
