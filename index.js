@@ -5,7 +5,7 @@ const readline = require('readline');
 const fs = require('fs');
 const pathPrefix = 'content/';
 const screenshotPathPrefix = 'screenshot/';
-const CronString = '0 15 0 * * *';
+let CronString = Math.floor(Math.random() * 100) % 60 + ' ' + Math.floor(Math.random() * 100) % 60 + ' ' + Math.floor(Math.random() * 10) % 7 + ' * * *';
 // const CronString = '0 * * * * *';
 let server;
 
@@ -232,7 +232,7 @@ async function task() {
             job.start();
         }, false, 'Asia/Shanghai');
         job.start();
-        await log('INFO', 'Cronjob set.');
+        await log('INFO', 'Cronjob set. Cron string: ' + CronString);
         await log('INFO', 'Next task will be fired at: ' + new Date(job.nextDate()).toLocaleString() + '\n');
     }
     else {
