@@ -73,3 +73,11 @@
     ```
    git pull
     ```
+   
+## 常见问题
+
+1. Linux 系统下截图显示方块或乱码。
+    - 没有安装中文字体。请自行安装中文字体。
+    
+1. Puppeteer 安装/启动时报错。
+    - 请移步至 [Troubleshooting](https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md)
