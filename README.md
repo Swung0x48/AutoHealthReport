@@ -64,3 +64,12 @@
 1. 使用守护进程保持运行。
 
     如果担心 `node` 进程意外关闭，可使用 [pm2](https://www.npmjs.com/package/pm2) 或 [forever](https://www.npmjs.com/package/forever) 等守护进程保持其运行。
+    
+1. 更新。
+
+    直接覆盖文件夹即可。
+    
+    或者也可以直接：
+    ```
+   git pull
+    ```
