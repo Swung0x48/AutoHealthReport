@@ -5,7 +5,7 @@ const readline = require('readline');
 const fs = require('fs');
 const pathPrefix = 'content/';
 const screenshotPathPrefix = 'screenshot/';
-let CronString = Math.floor(Math.random() * 100) % 60 + ' ' + Math.floor(Math.random() * 100) % 60 + ' ' + Math.floor(Math.random() * 10) % 7 + ' * * *';
+const CronString = Math.floor(Math.random() * 100) % 60 + ' ' + Math.floor(Math.random() * 100) % 60 + ' ' + Math.floor(Math.random() * 10) % 7 + ' * * *';
 // const CronString = '0 * * * * *';
 let server;
 
