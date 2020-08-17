@@ -135,8 +135,8 @@ async function emuBrowser(username, password) {
 
     await log('INFO', 'Report succeed.');
     await page.screenshot({path: pathPrefix  + 'success.png'});
+    let date = new Date();
     let screenshotPath = (() => {
-        let date = new Date();
         return 'report-' + [date.getFullYear(), date.getMonth() + 1, date.getDate()].join('.') + '.png';
     })();
     let screenshotString = await page.screenshot({path: pathPrefix + screenshotPathPrefix + screenshotPath, encoding: 'base64'});
@@ -160,6 +160,7 @@ async function screenshotServer(image, server) {
                 await log('INFO', 'Shutting down screenshot server to reload new screenshot.');
             });
         }
+        let date = new Date();
         server = http.createServer(function (req, res) {
             res.writeHead(200, {'Content-Type': 'text/html'});
             res.write("<!DOCTYPE html>\n" +
@@ -171,7 +172,7 @@ async function screenshotServer(image, server) {
                 "<body>\n" +
                 "    <div>\n" +
                 "        <p>\n" +
-                "            This screenshot is taken at: " + new Date().toLocaleString() +
+                "            This screenshot is taken at: " + date.toLocaleString() +
                 "    </p>\n" +
                 "        <br/>\n" +
                 "        <p>\n" +
