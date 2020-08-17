@@ -135,7 +135,10 @@ async function emuBrowser(username, password) {
 
     await log('INFO', 'Report succeed.');
     await page.screenshot({path: pathPrefix  + 'success.png'});
-    let screenshotPath = 'report-' + new Date().toISOString() + '.png'
+    let screenshotPath = (() => {
+        let date = new Date();
+        return 'report-' + [date.getFullYear(), date.getMonth() + 1, date.getDate()].join('.') + '.png';
+    })();
     let screenshotString = await page.screenshot({path: pathPrefix + screenshotPathPrefix + screenshotPath, encoding: 'base64'});
     await log('INFO', 'Screenshot saved at: ' + pathPrefix + screenshotPathPrefix + screenshotPath);
 
