@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const CronJob = require('cron').CronJob;
 const http = require('http');
+const https = require('https');
 const readline = require('readline');
 const fs = require('fs');
 const pathPrefix = 'content/';
@@ -76,76 +77,81 @@ async function onReject(reason, detail, page) {
 }
 
 async function emuBrowser(username, password) {
-    await log('INFO', 'Starting puppeteer...');
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.setViewport({ width: 450, height: 550 });
-
-    await page.goto('https://www.shou.edu.cn/');
-    await page.screenshot({
-        path: pathPrefix + 'init.png'
-    });
-
-    await log('INFO', 'Logging in...');
-
-    /* --- Login --- */
-    await page.type('input[name="username"]', username);
-    await page.type('input[name="password"]', password);
-    await page.screenshot({path: pathPrefix + 'login.png'});
-    await page.click('input[name="submit"]');
-
     try {
-        await page.waitForSelector(".c_4f9dff");
-        await log('INFO', 'Login succeeded.');
-    }
-    catch (e) {
-        await onReject(e, "Login failed. Maybe there's a problem in credential or VPN connection?", page);
+        await log('INFO', 'Starting puppeteer...');
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.setViewport({width: 450, height: 550});
+
+        await page.goto('https://www.shou.edu.cn/');
         await page.screenshot({
-            path: pathPrefix + 'postlogin.png'
+            path: pathPrefix + 'init.png'
         });
-    }
 
-    await page.goto('https://workflow.shou.edu.cn/infoplus/form/XSJKSBLJ/start');
-    await log('INFO', 'Redirecting...');
+        await log('INFO', 'Logging in...');
 
-    try {
-        await log('INFO', 'Waiting for report UI to show up...');
-        await page.waitForSelector('#V0_CTRL62', {visible: true});
-        await page.click("#V0_CTRL62");
-        await page.screenshot({path: pathPrefix + 'pre-report.png'});
-        await log('INFO', 'Report UI OK.');
+        /* --- Login --- */
+        await page.type('input[name="username"]', username);
+        await page.type('input[name="password"]', password);
+        await page.screenshot({path: pathPrefix + 'login.png'});
+        await page.click('input[name="submit"]');
+
+        try {
+            await page.waitForSelector(".c_4f9dff");
+            await log('INFO', 'Login succeeded.');
+        } catch (e) {
+            await onReject(e, "Login failed. Maybe there's a problem in credential or VPN connection?", page);
+            await page.screenshot({
+                path: pathPrefix + 'postlogin.png'
+            });
+        }
+
+        await page.goto('https://workflow.shou.edu.cn/infoplus/form/XSJKSBLJ/start');
+        await log('INFO', 'Redirecting...');
+
+        try {
+            await log('INFO', 'Waiting for report UI to show up...');
+            await page.waitForSelector('#V0_CTRL62', {visible: true});
+            await page.click("#V0_CTRL62");
+            await page.screenshot({path: pathPrefix + 'pre-report.png'});
+            await log('INFO', 'Report UI OK.');
+        } catch (e) {
+            await onReject(e, 'Report UI does not show up.', page);
+        }
+
+        await page.waitForSelector(".command_button_content");
+        await page.click(".command_button_content");
+
+        await page.waitForSelector(".dialog_button.default.fr");
+        await page.click(".dialog_button.default.fr");
+        try {
+            await log('INFO', "Wait until report process finished...");
+            await page.waitFor(1000);
+            await page.waitForSelector(".dialog_button");
+        } catch (e) {
+            await onReject(e, "Potentially failed report. Maybe performed between 22:00 - 23:59 ?", page);
+        }
+
+        await log('INFO', 'Report succeed.');
+        await page.screenshot({path: pathPrefix + 'success.png'});
+        let date = new Date();
+        let screenshotPath = (() => {
+            return 'report-' + [date.getFullYear(), date.getMonth() + 1, date.getDate()].join('.') + '.png';
+        })();
+        let screenshotString = await page.screenshot({
+            path: pathPrefix + screenshotPathPrefix + screenshotPath,
+            encoding: 'base64'
+        });
+        await log('INFO', 'Screenshot saved at: ' + pathPrefix + screenshotPathPrefix + screenshotPath);
+
+        await browser.close();
+        await log('INFO', 'Closing browser...');
+        await log('INFO', 'Exiting...\n');
+        return screenshotString;
     }
     catch (e) {
-        await onReject(e, 'Report UI does not show up.', page);
+        await onReject(e, 'Unknown error occurred.', null);
     }
-
-    await page.waitForSelector(".command_button_content");
-    await page.click(".command_button_content");
-
-    await page.waitForSelector(".dialog_button.default.fr");
-    await page.click(".dialog_button.default.fr");
-    try {
-        await log('INFO', "Wait until report process finished...");
-        await page.waitFor(1000);
-        await page.waitForSelector(".dialog_button");
-    }
-    catch (e) {
-        await onReject(e, "Potentially failed report. Maybe performed between 22:00 - 23:59 ?", page);
-    }
-
-    await log('INFO', 'Report succeed.');
-    await page.screenshot({path: pathPrefix  + 'success.png'});
-    let date = new Date();
-    let screenshotPath = (() => {
-        return 'report-' + [date.getFullYear(), date.getMonth() + 1, date.getDate()].join('.') + '.png';
-    })();
-    let screenshotString = await page.screenshot({path: pathPrefix + screenshotPathPrefix + screenshotPath, encoding: 'base64'});
-    await log('INFO', 'Screenshot saved at: ' + pathPrefix + screenshotPathPrefix + screenshotPath);
-
-    await browser.close();
-    await log('INFO', 'Closing browser...');
-    await log('INFO', 'Exiting...\n');
-    return screenshotString;
     // process.exit(0);
 }
 
@@ -193,6 +199,29 @@ async function screenshotServer(image, server) {
     }
 }
 
+async function heartBeat() {
+    return new Promise((resolve, reject) => {
+        log('INFO', "Sending heartbeat...")
+        http.get('http://202.121.66.141', res => {
+            log('INFO', 'Status code: ' + res.statusCode, null);
+            // log('INFO', 'Headers: ' + res.headers, null);
+            // res.on("data", data => {
+            //     log("INFO", "Request abstract:");
+            //     log("INFO", data.substring(0 ,20));
+            // })
+            resolve();
+            // res
+            //     .on('data', data => {
+            //         process.stdout.write(data);
+            //         resolve(data);
+            //     });
+        })
+            .on('error', e => {
+                reject(e);
+        });
+    });
+}
+
 async function task() {
     if (!fs.existsSync(pathPrefix)) {
         fs.mkdirSync(pathPrefix);
@@ -210,6 +239,7 @@ async function task() {
     try {
         await log('INFO', 'Dry run...\n');
         await task();
+        await heartBeat();
         await log('INFO', 'Dry run completed.');
         option = 'y';
     }
@@ -227,6 +257,7 @@ async function task() {
     }
 
     if (option === 'y') {
+        /*- Scheduled task -*/
         let job = new CronJob(CronString, async () => {
             await task();
             job.stop();
@@ -235,9 +266,32 @@ async function task() {
             log('INFO', 'Next task will be fired at: ' + new Date(job.nextDate()).toLocaleString() + '\n');
             job.start();
         }, false, 'Asia/Shanghai');
+
         job.start();
         await log('INFO', 'Cronjob set. Cron string: ' + CronString);
         await log('INFO', 'Next task will be fired at: ' + new Date(job.nextDate()).toLocaleString() + '\n');
+
+        /* - Heartbeat -*/
+        let interval = Math.floor(Math.random() * 10) % 5; // In minute.
+        let heartBeatCronString = [Math.floor(Math.random()) * 100 % 60, "*/" + interval, "*", "*", "*", "*"].join(" ");
+        let heartBeatJob = new CronJob(
+            heartBeatCronString,
+            async () => {
+                try {
+                    await heartBeat();
+                    heartBeatJob.stop();
+                }
+                catch (e) {
+                    await onReject(e, "Heartbeat error", null);
+                }
+            },
+            () => {
+                log('INFO', "A heart beat query was performed to keep alive.\n");
+                heartBeatJob.start();
+            }, false, 'Asia/Shanghai');
+
+        heartBeatJob.start();
+        await log("INFO", "Heartbeat query interval has been set to " + interval + " minute(s).\n");
     }
     else {
         process.exit(1);
