@@ -297,5 +297,3 @@ async function task() {
         process.exit(1);
     }
 })();
-
-
