@@ -272,7 +272,7 @@ async function task() {
         await log('INFO', 'Next task will be fired at: ' + new Date(job.nextDate()).toLocaleString() + '\n');
 
         /* - Heartbeat -*/
-        let interval = Math.floor(Math.random() * 10) % 5; // In minute.
+        let interval = Math.floor(Math.random() * 10) % 4 + 1; // In minute.
         let heartBeatCronString = [Math.floor(Math.random()) * 100 % 60, "*/" + interval, "*", "*", "*", "*"].join(" ");
         let heartBeatJob = new CronJob(
             heartBeatCronString,
